@@ -24,15 +24,19 @@ object Samples {
    * Example 1
    */
   case class Employee(id: Int, fname: String, lname: String, age: Int, city: String)
+  val x: Int = 50
+  val y = x - 32
   val sample = List(
-    Employee(1, "Baba", "Basar",  49, "Ankara"),
-    Employee(2, "Anne", "Keskin", 49, "Izmir"),
-    Employee(3, "Evren", "Basar", 17, "Atlanta"),
-    Employee(4, "Kayra", "Basar", 13, "Atlanta"),
-    Employee(5, "Baray", "Basar",  8, "Atlanta")
+    Employee(1, "Baba", "Basar",  x, "Ankara"),
+    Employee(2, "Anne", "Keskin", x, "Izmir"),
+    Employee(3, "Evren", "Basar", y, "Atlanta"),
+    Employee(4, "Kayra", "Basar", y-4, "Atlanta"),
+    Employee(5, "Baray", "Basar", y-8, "Atlanta")
   )
   def sample1() = {
     val employeeDF = sc.parallelize(sample).toDF()
+    val p2 = sc.parallelize(sample).toDS()
+    p2.show
     employeeDF.show
     val atlTeam = employeeDF
       .select("id", "lname", "fname")
