@@ -4,4 +4,5 @@ src/main/resources/timeusage/atussum.csv
 project/project
 project/target
 target
+*~
 
