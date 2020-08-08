@@ -31,8 +31,12 @@ object TimeUsage extends TimeUsageInterface {
   }
 
   def timeUsageByLifePeriod(): Unit = {
-    val (columns, initDf) = if (false) read("src/main/resources/timeusage/atussum.csv")
-    else read("src/main/resources/timeusage/sample2.csv")
+    // bbx: just set to true to run on the full test case:
+    val full = false
+    val test =
+      if (full) "src/main/resources/timeusage/atussum.csv"
+      else      "src/main/resources/timeusage/sample2.csv"
+    val (columns, initDf) = read(test)
 
     val (primaryNeedsColumns, workColumns, otherColumns) = classifiedColumns(columns)
     val summaryDf = timeUsageSummary(primaryNeedsColumns, workColumns, otherColumns, initDf)
@@ -112,7 +116,7 @@ object TimeUsage extends TimeUsageInterface {
     *
     * Note that the initial DataFrame contains time in ''minutes''. You have to convert it into ''hours''.
     */
-  // ??? Third //
+  // ??? Third
   def timeUsageSummary(
     primaryNeedsColumns: List[Column],
     workColumns: List[Column],
@@ -172,6 +176,7 @@ object TimeUsage extends TimeUsageInterface {
     *
     * Finally, the resulting DataFrame should be sorted by working status, sex and age.
     */
+  // ??? Fourth NOT FINISHED YET!
   def timeUsageGrouped(summed: DataFrame): DataFrame = {
     summed
       .select(summed("working"), summed("sex"), summed("age"), summed("primaryNeeds"))
@@ -190,6 +195,7 @@ object TimeUsage extends TimeUsageInterface {
   /** @return SQL query equivalent to the transformation implemented in `timeUsageGrouped`
     * @param viewName Name of the SQL view to use
     */
+  // ??? Fifth
   def timeUsageGroupedSqlQuery(viewName: String): String =
     ???
 
@@ -200,6 +206,7 @@ object TimeUsage extends TimeUsageInterface {
     * Hint: you should use the `getAs` method of `Row` to look up columns and
     * cast them at the same time.
     */
+  // ??? Sixth
   def timeUsageSummaryTyped(timeUsageSummaryDf: DataFrame): Dataset[TimeUsageRow] =
     ???
 
@@ -214,6 +221,7 @@ object TimeUsage extends TimeUsageInterface {
     *
     * Hint: you should use the `groupByKey` and `typed.avg` methods.
     */
+  // ??? Seventh
   def timeUsageGroupedTyped(summed: Dataset[TimeUsageRow]): Dataset[TimeUsageRow] = {
     import org.apache.spark.sql.expressions.scalalang.typed
     ???
