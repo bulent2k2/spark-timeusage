@@ -32,7 +32,7 @@ object TimeUsage extends TimeUsageInterface {
 
   def timeUsageByLifePeriod(): Unit = {
     val (columns, initDf) = if (false) read("src/main/resources/timeusage/atussum.csv")
-    else read("src/main/resources/timeusage/sample.csv")
+    else read("src/main/resources/timeusage/sample2.csv")
 
     val (primaryNeedsColumns, workColumns, otherColumns) = classifiedColumns(columns)
     val summaryDf = timeUsageSummary(primaryNeedsColumns, workColumns, otherColumns, initDf)
