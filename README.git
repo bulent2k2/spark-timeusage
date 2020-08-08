@@ -1,0 +1,5 @@
+* Do once:
+git remote add origin https://github.com/bulent2k2/spark-timeusage.git
+* Do when there is new code:
+git push -u origin master
+* The end
