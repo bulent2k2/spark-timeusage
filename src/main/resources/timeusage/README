@@ -1,0 +1,4 @@
+# atussum.csv is from http://alaska.epfl.ch/~dockermoocs/bigdata/atussum.csv
+
+head atussum.csv > sample.csv
+tail atussum.csv >> sample2.csv
