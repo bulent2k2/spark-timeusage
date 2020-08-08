@@ -21,12 +21,19 @@ object TimeUsage extends TimeUsageInterface {
 
   /** Main function */
   def main(args: Array[String]): Unit = {
-    timeUsageByLifePeriod()
-    spark.close()
+    try {
+      timeUsageByLifePeriod()
+    } catch {
+      case t: Throwable => println(t)
+    } finally {
+      spark.stop()
+    }
   }
 
   def timeUsageByLifePeriod(): Unit = {
-    val (columns, initDf) = read("src/main/resources/timeusage/atussum.csv")
+    val (columns, initDf) = if (false) read("src/main/resources/timeusage/atussum.csv")
+    else read("src/main/resources/timeusage/sample.csv")
+
     val (primaryNeedsColumns, workColumns, otherColumns) = classifiedColumns(columns)
     val summaryDf = timeUsageSummary(primaryNeedsColumns, workColumns, otherColumns, initDf)
     val finalDf = timeUsageGrouped(summaryDf)
@@ -42,8 +49,11 @@ object TimeUsage extends TimeUsageInterface {
   /** @return An RDD Row compatible with the schema produced by `dfSchema`
     * @param line Raw fields
     */
-  def row(line: List[String]): Row =
-    ???
+  /* ??? First assignment. From the doc:
+   * *** https://spark.apache.org/docs/2.1.0/api/scala/index.html#org.apache.spark.sql.Row 
+   */
+  def row(line: List[String]): Row = 
+    Row.fromSeq(line.toSeq)
 
   /** @return The initial data frame columns partitioned in three groups: primary needs (sleeping, eating, etc.),
     *         work and other (leisure activities)
@@ -60,8 +70,16 @@ object TimeUsage extends TimeUsageInterface {
     * 3. other activities (leisure). These are the columns starting with “t02”, “t04”, “t06”, “t07”, “t08”, “t09”,
     *    “t10”, “t12”, “t13”, “t14”, “t15”, “t16” and “t18” (those which are not part of the previous groups only).
     */
+  /* ??? Second.
+   * *** https://spark.apache.org/docs/2.1.0/api/scala/index.html#org.apache.spark.sql.Column
+   * *** https://www.bls.gov/tus/lexiconnoex0315.pdf
+   */
   def classifiedColumns(columnNames: List[String]): (List[Column], List[Column], List[Column]) = {
-    ???
+    (
+      List($"t01", $"t03", $"t11", $"t1801", $"t1803"),
+      List($"t05", $"t1805"),
+      List($"t02", $"t04", $"t06", $"t07", $"t08", $"t09",$"t10", $"t12", $"t13", $"t14", $"t15", $"t16", $"t18")
+    )
   }
 
   /** @return a projection of the initial DataFrame such that all columns containing hours spent on primary needs
@@ -94,6 +112,7 @@ object TimeUsage extends TimeUsageInterface {
     *
     * Note that the initial DataFrame contains time in ''minutes''. You have to convert it into ''hours''.
     */
+  // ??? Third //
   def timeUsageSummary(
     primaryNeedsColumns: List[Column],
     workColumns: List[Column],
@@ -104,17 +123,33 @@ object TimeUsage extends TimeUsageInterface {
     // more sense for our use case
     // Hint: you can use the `when` and `otherwise` Spark functions
     // Hint: don’t forget to give your columns the expected name with the `as` method
-    val workingStatusProjection: Column = ???
-    val sexProjection: Column = ???
-    val ageProjection: Column = ???
+    val workingStatusProjection: Column =
+      when(df("telfs") >= 1 && df("telfs") < 3, "working")
+        .otherwise("not working")
+        .as("working")
+    val sexProjection: Column =
+      when(df("tesex") === 1, "male")
+        .otherwise("female")
+        .as("sex")
+    val ageProjection: Column =
+      when(df("teage") >= 15 && df("teage") <= 22, "young")
+        .when(df("teage") >= 23 && df("teage") <= 55, "active")
+        .otherwise("elder")
+        .as("age")
 
     // Create columns that sum columns of the initial dataset
     // Hint: you want to create a complex column expression that sums other columns
     //       by using the `+` operator between them
     // Hint: don’t forget to convert the value to hours
-    val primaryNeedsProjection: Column = ???
-    val workProjection: Column = ???
-    val otherProjection: Column = ???
+    val primaryNeedsProjection: Column = primaryNeedsColumns
+      .reduce((a,b) => (a + b))
+      .as("primaryNeeds") / 60.0
+    val workProjection: Column = workColumns
+      .reduce((a,b) => (a + b))
+      .as("work") / 60.0
+    val otherProjection: Column = otherColumns
+      .reduce((a,b) => (a + b))
+      .as("other")
     df
       .select(workingStatusProjection, sexProjection, ageProjection, primaryNeedsProjection, workProjection, otherProjection)
       .where($"telfs" <= 4) // Discard people who are not in labor force
@@ -122,7 +157,7 @@ object TimeUsage extends TimeUsageInterface {
 
   /** @return the average daily time (in hours) spent in primary needs, working or leisure, grouped by the different
     *         ages of life (young, active or elder), sex and working status.
-    * @param summed DataFrame returned by `timeUsageSumByClass`
+    * @param summed DataFrame returned by `timeUsageSumByClass`  bbx: rename to: timeUsageSummary
     *
     * The resulting DataFrame should have the following columns:
     * - working: the “working” column of the `summed` DataFrame,
@@ -138,7 +173,8 @@ object TimeUsage extends TimeUsageInterface {
     * Finally, the resulting DataFrame should be sorted by working status, sex and age.
     */
   def timeUsageGrouped(summed: DataFrame): DataFrame = {
-    ???
+    summed
+      .select(summed("working"), summed("sex"), summed("age"), summed("primaryNeeds"))
   }
 
   /**
